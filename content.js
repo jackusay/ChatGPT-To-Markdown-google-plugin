@@ -275,7 +275,7 @@ function exportChatAsMarkdown() {
 
     for (let i = 0; i < allElements.length; i += 2) {
         if (!allElements[i + 1]) break; // 防止越界
-        let userText = allElements[i].textContent.trim();
+        let userText = allElements[i].innerHTML.trim();
         let answerHtml = allElements[i + 1].innerHTML.trim();
 
         userText = htmlToMarkdown(userText);
@@ -382,7 +382,8 @@ function htmlToMarkdown(html) {
             // 获取第一个子元素的文本内容
             const codeType = div.querySelector('div > div > span')?.textContent || '';
             // 获取第三个子元素的文本内容
-            const markdownCode = div.querySelector('div > div:nth-child(3) > code')?.textContent || div.textContent;
+            let markdownCode = div.querySelector('div > div:nth-child(3) > pre code')?.textContent || div.textContent;
+            markdownCode = escapeCodeBlock(markdownCode); // escape < > 
             // 替换内容
             div.innerHTML = `\n\`\`\`${codeType}\n${markdownCode}\n\`\`\``;
         });
@@ -393,6 +394,11 @@ function htmlToMarkdown(html) {
             const markdownCode = div.querySelector('div > div:nth-child(2) > div > pre')?.textContent || div.textContent;
             div.innerHTML = `\n\`\`\`${codeType}\n${markdownCode}\n\`\`\``;
         });
+    }
+
+    // 在處理程式碼塊時，把內容先 escape
+    function escapeCodeBlock(content) {
+        return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     // 8. 处理列表
@@ -456,7 +462,8 @@ function htmlToMarkdown(html) {
     });
 
     let markdown = doc.body.textContent || '';
-
+    // 將連續 3 行以上空行壓縮成 2 行
+    markdown = markdown.replace(/\n{3,}/g, '\n\n');
     return markdown.trim();
 
     // let markdown = doc.body.innerHTML.replace(/<[^>]*>/g, '');
